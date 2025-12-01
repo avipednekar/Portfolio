@@ -10,6 +10,9 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+// Serve static files
+app.use(express.static(__dirname));
+
 // POST route for contact form
 app.post("/send", async (req, res) => {
   const { name, email, message } = req.body;
@@ -40,15 +43,19 @@ Message: ${message}
     // Send email
     await transporter.sendMail(mailOptions);
 
-    res.status(200).json({ success: true, message: "Message sent successfully!" });
+    res
+      .status(200)
+      .json({ success: true, message: "Message sent successfully!" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Failed to send message." });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to send message." });
   }
 });
 
 // Start server
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
