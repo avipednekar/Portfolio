@@ -38,7 +38,7 @@ document
     };
 
     try {
-      const response = await fetch("/send", {
+      const response = await fetch("https://avinash-portfolio-l062.onrender.com/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
