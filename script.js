@@ -1,3 +1,6 @@
+// script.js - Complete File
+
+// 1. Toast Notification Function
 function showToast(message, success = true) {
   const toast = document.getElementById("toast");
   const toastMessage = document.getElementById("toast-message");
@@ -17,11 +20,13 @@ function showToast(message, success = true) {
   }, 3000);
 }
 
+// 2. Contact Form Handling (Updated for Formspree)
 document
   .getElementById("contact-form")
   .addEventListener("submit", async function (e) {
     e.preventDefault();
 
+    const form = e.target;
     const btn = document.getElementById("submit-btn");
     const btnText = document.getElementById("btn-text");
     const btnLoader = document.getElementById("btn-loader");
@@ -31,26 +36,28 @@ document
     btnText.textContent = "Sending...";
     btnLoader.classList.remove("hidden");
 
-    const formData = {
-      name: document.getElementById("name").value,
-      email: document.getElementById("email").value,
-      message: document.getElementById("message").value,
-    };
+    const formData = new FormData(form);
 
     try {
-      const response = await fetch("https://avinash-portfolio-l062.onrender.com/send", {
+      const response = await fetch(form.action, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
       });
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (response.ok) {
         showToast("✅ Message sent successfully!", true);
-        document.getElementById("contact-form").reset();
+        form.reset();
       } else {
-        showToast("❌ Failed to send message.", false);
+        const data = await response.json();
+        if (Object.hasOwn(data, 'errors')) {
+          const errorMessage = data.errors.map(error => error.message).join(", ");
+          showToast(`❌ ${errorMessage}`, false);
+        } else {
+          showToast("❌ Failed to send message.", false);
+        }
       }
     } catch (error) {
       showToast("⚠️ Something went wrong. Try again later.", false);
@@ -62,6 +69,7 @@ document
     }
   });
 
+// 3. Mobile Menu, Header, Scroll Reveal, Typed.js
 document.addEventListener("DOMContentLoaded", function () {
   // --- Mobile Menu Interactivity ---
   const menuBtn = document.getElementById("menu-btn");
@@ -125,6 +133,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
+// 4. Project Filtering and Modals
 document.addEventListener("DOMContentLoaded", function () {
   const filterButtons = document.querySelectorAll(".filter-btn");
   const projectCards = document.querySelectorAll(".project-card");
