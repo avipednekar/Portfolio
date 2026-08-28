@@ -1,198 +1,314 @@
-// script.js - Complete File
+// script.js - Avinash Pednekar Portfolio Script
 
-// 1. Toast Notification Function
-function showToast(message, success = true) {
+// 1. Toast Notification Helper
+function showToast(message, isSuccess = true) {
   const toast = document.getElementById("toast");
   const toastMessage = document.getElementById("toast-message");
+  const toastIcon = document.getElementById("toast-icon");
+
+  if (!toast || !toastMessage) return;
 
   toastMessage.textContent = message;
 
-  toast.className = `fixed bottom-6 right-6 px-6 py-4 rounded-lg shadow-lg border transition-opacity duration-500 ${
-    success ? "bg-green-600 border-green-400" : "bg-red-600 border-red-400"
-  } text-white`;
+  if (toastIcon) {
+    if (isSuccess) {
+      toastIcon.className = "fas fa-check-circle text-emerald-400 dark:text-emerald-600 text-lg";
+    } else {
+      toastIcon.className = "fas fa-exclamation-circle text-rose-400 dark:text-rose-600 text-lg";
+    }
+  }
 
   toast.classList.remove("hidden");
-  toast.style.opacity = "1";
+  // Trigger animation
+  requestAnimationFrame(() => {
+    toast.classList.remove("opacity-0", "translate-y-4");
+    toast.classList.add("opacity-100", "translate-y-0");
+  });
 
   setTimeout(() => {
-    toast.style.opacity = "0";
-    setTimeout(() => toast.classList.add("hidden"), 500);
-  }, 3000);
+    toast.classList.remove("opacity-100", "translate-y-0");
+    toast.classList.add("opacity-0", "translate-y-4");
+    setTimeout(() => toast.classList.add("hidden"), 300);
+  }, 3500);
 }
 
-// 2. Contact Form Handling (Updated for Formspree)
-document
-  .getElementById("contact-form")
-  .addEventListener("submit", async function (e) {
+// 2. Theme Toggle (Fresh Light Default + Dark Mode Option)
+function initTheme() {
+  const savedTheme = localStorage.getItem("theme");
+  const html = document.documentElement;
+  const themeIcons = [
+    document.getElementById("theme-icon"),
+    document.getElementById("theme-icon-mobile")
+  ];
+
+  function updateIcons(isDark) {
+    themeIcons.forEach((icon) => {
+      if (!icon) return;
+      if (isDark) {
+        icon.className = "fas fa-sun text-amber-400 text-base";
+      } else {
+        icon.className = "fas fa-moon text-slate-600 text-base";
+      }
+    });
+  }
+
+  // Set initial theme - default to Light theme unless explicitly saved as 'dark'
+  if (savedTheme === "dark") {
+    html.classList.add("dark");
+    updateIcons(true);
+  } else {
+    html.classList.remove("dark");
+    updateIcons(false);
+  }
+
+  function toggleTheme() {
+    const isDark = html.classList.toggle("dark");
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+    updateIcons(isDark);
+    showToast(isDark ? "🌙 Switched to Dark Theme" : "☀️ Switched to Fresh Light Theme", true);
+  }
+
+  const themeToggleBtn = document.getElementById("theme-toggle");
+  const themeToggleMobileBtn = document.getElementById("theme-toggle-mobile");
+
+  if (themeToggleBtn) themeToggleBtn.addEventListener("click", toggleTheme);
+  if (themeToggleMobileBtn) themeToggleMobileBtn.addEventListener("click", toggleTheme);
+}
+
+// 3. Contact Form Submission (Formspree Integration)
+function initContactForm() {
+  const contactForm = document.getElementById("contact-form");
+  if (!contactForm) return;
+
+  contactForm.addEventListener("submit", async function (e) {
     e.preventDefault();
 
-    const form = e.target;
-    const btn = document.getElementById("submit-btn");
+    const submitBtn = document.getElementById("submit-btn");
     const btnText = document.getElementById("btn-text");
     const btnLoader = document.getElementById("btn-loader");
 
-    // Show loader, hide text
-    btn.disabled = true;
-    btnText.textContent = "Sending...";
-    btnLoader.classList.remove("hidden");
+    // Loading State
+    submitBtn.disabled = true;
+    if (btnText) btnText.textContent = "Sending...";
+    if (btnLoader) btnLoader.classList.remove("hidden");
 
-    const formData = new FormData(form);
+    const formData = new FormData(contactForm);
 
     try {
-      const response = await fetch(form.action, {
+      const response = await fetch(contactForm.action, {
         method: "POST",
         body: formData,
         headers: {
-          'Accept': 'application/json'
-        }
+          Accept: "application/json",
+        },
       });
 
       if (response.ok) {
-        showToast("✅ Message sent successfully!", true);
-        form.reset();
+        showToast("✨ Message sent successfully! I will reply soon.", true);
+        contactForm.reset();
       } else {
         const data = await response.json();
-        if (Object.hasOwn(data, 'errors')) {
-          const errorMessage = data.errors.map(error => error.message).join(", ");
-          showToast(`❌ ${errorMessage}`, false);
+        if (data && data.errors) {
+          const errMsg = data.errors.map((err) => err.message).join(", ");
+          showToast(`❌ Error: ${errMsg}`, false);
         } else {
-          showToast("❌ Failed to send message.", false);
+          showToast("❌ Failed to send message. Please try again.", false);
         }
       }
     } catch (error) {
-      showToast("⚠️ Something went wrong. Try again later.", false);
+      showToast("⚠️ Network issue. Please email avinashpednekar431@gmail.com directly.", false);
     } finally {
-      // Reset button
-      btn.disabled = false;
-      btnText.textContent = "Send Message";
-      btnLoader.classList.add("hidden");
+      // Reset Button State
+      submitBtn.disabled = false;
+      if (btnText) btnText.textContent = "Send Message";
+      if (btnLoader) btnLoader.classList.add("hidden");
     }
   });
+}
 
-// 3. Mobile Menu, Header, Scroll Reveal, Typed.js
-document.addEventListener("DOMContentLoaded", function () {
-  // --- Mobile Menu Interactivity ---
+// 4. Copy Email to Clipboard
+function initCopyEmail() {
+  const copyBtn = document.getElementById("copy-email-btn");
+  if (!copyBtn) return;
+
+  copyBtn.addEventListener("click", () => {
+    const email = "avinashpednekar431@gmail.com";
+    navigator.clipboard
+      .writeText(email)
+      .then(() => {
+        showToast("📋 Email copied to clipboard: " + email, true);
+      })
+      .catch(() => {
+        showToast("📋 Contact: " + email, true);
+      });
+  });
+}
+
+// 5. Mobile Navigation & Scroll Reveal
+function initNavAndScroll() {
+  // Mobile Hamburger Toggle
   const menuBtn = document.getElementById("menu-btn");
   const mobileMenu = document.getElementById("mobile-menu");
-  menuBtn.addEventListener("click", () => {
-    mobileMenu.classList.toggle("hidden");
-  });
 
-  // Close mobile menu when a link is clicked
-  const mobileLinks = mobileMenu.getElementsByTagName("a");
-  for (let link of mobileLinks) {
-    link.addEventListener("click", () => {
-      mobileMenu.classList.add("hidden");
+  if (menuBtn && mobileMenu) {
+    menuBtn.addEventListener("click", () => {
+      mobileMenu.classList.toggle("hidden");
+    });
+
+    // Close menu when a link is clicked
+    const links = mobileMenu.querySelectorAll("a");
+    links.forEach((link) => {
+      link.addEventListener("click", () => {
+        mobileMenu.classList.add("hidden");
+      });
     });
   }
 
-  // --- Header Style on Scroll ---
+  // Header elevation on scroll
   const header = document.getElementById("header");
   window.addEventListener("scroll", () => {
-    if (window.scrollY > 50) {
-      header.classList.add(
-        "bg-neutral-900/90",
-        "backdrop-blur-sm",
-        "shadow-lg"
-      );
+    if (window.scrollY > 40) {
+      header.classList.add("shadow-md");
     } else {
-      header.classList.remove(
-        "bg-neutral-900/90",
-        "backdrop-blur-sm",
-        "shadow-lg"
-      );
+      header.classList.remove("shadow-md");
     }
   });
 
-  // --- Scroll Reveal Animation ---
-  const revealElements = document.querySelectorAll(".reveal");
-  const revealOnScroll = () => {
-    const windowHeight = window.innerHeight;
-    for (let i = 0; i < revealElements.length; i++) {
-      const elementTop = revealElements[i].getBoundingClientRect().top;
-      const elementVisible = 150;
-      if (elementTop < windowHeight - elementVisible) {
-        revealElements[i].classList.add("active");
-      }
-    }
+  // Intersection Observer for Smooth Scroll Reveal
+  const observerOptions = {
+    threshold: 0.12,
+    rootMargin: "0px 0px -40px 0px",
   };
-  window.addEventListener("scroll", revealOnScroll);
-  revealOnScroll(); // Initial check
 
-  // --- Typed.js Hero Animation ---
-  if (document.getElementById("hero-typing-text")) {
+  const revealObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("revealed");
+        observer.unobserve(entry.target);
+      }
+    });
+  }, observerOptions);
+
+  const revealElements = document.querySelectorAll(".reveal-item");
+  revealElements.forEach((el) => revealObserver.observe(el));
+}
+
+// 6. Typed.js Hero Animation
+function initTypedText() {
+  const typingTarget = document.getElementById("hero-typing-text");
+  if (typingTarget && typeof Typed !== "undefined") {
     new Typed("#hero-typing-text", {
-      strings: ["Developer.", "UI/UX Designer.", "Problem Solver."],
-      typeSpeed: 70,
-      backSpeed: 40,
-      backDelay: 1500,
+      strings: [
+        "Full-Stack Applications.",
+        "Java & Spring Boot Backends.",
+        "Scalable RESTful Systems.",
+        "AI-Integrated Solutions.",
+      ],
+      typeSpeed: 60,
+      backSpeed: 35,
+      backDelay: 1800,
       loop: true,
       smartBackspace: true,
-      cursorChar: "_",
+      cursorChar: "|",
     });
   }
-});
+}
 
-// 4. Project Filtering and Modals
-document.addEventListener("DOMContentLoaded", function () {
-  const filterButtons = document.querySelectorAll(".filter-btn");
+// 7. Project Category Filtering
+function initProjectFilter() {
+  const filterBtns = document.querySelectorAll(".filter-btn");
   const projectCards = document.querySelectorAll(".project-card");
 
-  filterButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      // Remove active class from all buttons
-      filterButtons.forEach((btn) => btn.classList.remove("active"));
-      // Add active class to clicked button
-      button.classList.add("active");
+  filterBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      filterBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
 
-      const filterValue = button.getAttribute("data-filter");
+      const filter = btn.getAttribute("data-filter");
 
       projectCards.forEach((card) => {
-        if (filterValue === "all") {
-          card.style.display = "block";
+        const categories = (card.getAttribute("data-category") || "").split(",");
+        if (filter === "all" || categories.includes(filter)) {
+          card.style.display = "flex";
+          card.style.opacity = "1";
         } else {
-          const categories = card.getAttribute("data-category").split(",");
-          if (categories.includes(filterValue)) {
-            card.style.display = "block";
-          } else {
-            card.style.display = "none";
-          }
+          card.style.display = "none";
+          card.style.opacity = "0";
         }
       });
     });
   });
+}
 
-  // Project modal functionality
-  const viewDetailsButtons = document.querySelectorAll(".view-details");
-  const projectModals = document.querySelectorAll(".project-modal");
-  const closeModalButtons = document.querySelectorAll(".close-modal");
+// 8. Project Details Modal Dialogs
+function initProjectModals() {
+  const detailBtns = document.querySelectorAll(".view-details-btn");
+  const closeBtns = document.querySelectorAll(".modal-close-btn");
+  const modals = document.querySelectorAll(".project-modal");
 
-  viewDetailsButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const projectId = button.getAttribute("data-project");
-      const modal = document.getElementById(`project-modal-${projectId}`);
-      if (modal) {
-        modal.style.display = "block";
-        document.body.style.overflow = "hidden";
-      }
+  function openModal(projectId) {
+    const targetModal = document.getElementById(`project-modal-${projectId}`);
+    if (!targetModal) return;
+
+    targetModal.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal(modal) {
+    if (!modal) return;
+    modal.classList.remove("active");
+    document.body.style.overflow = "auto";
+  }
+
+  detailBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const projectId = btn.getAttribute("data-project");
+      openModal(projectId);
     });
   });
 
-  closeModalButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const modal = button.closest(".project-modal");
-      modal.style.display = "none";
-      document.body.style.overflow = "auto";
+  closeBtns.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const modal = e.target.closest(".project-modal");
+      closeModal(modal);
     });
   });
 
-  // Close modal when clicking outside
-  projectModals.forEach((modal) => {
+  modals.forEach((modal) => {
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
-        modal.style.display = "none";
-        document.body.style.overflow = "auto";
+        closeModal(modal);
       }
     });
   });
+
+  // ESC key listener to close active modal
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const activeModal = document.querySelector(".project-modal.active");
+      if (activeModal) {
+        closeModal(activeModal);
+      }
+    }
+  });
+}
+
+// 9. Current Year Auto-Update
+function initYear() {
+  const yearEl = document.getElementById("current-year");
+  if (yearEl) {
+    yearEl.textContent = new Date().getFullYear();
+  }
+}
+
+// Initialize everything on DOMContentLoaded
+document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
+  initContactForm();
+  initCopyEmail();
+  initNavAndScroll();
+  initTypedText();
+  initProjectFilter();
+  initProjectModals();
+  initYear();
 });
