@@ -12,14 +12,13 @@ function showToast(message, isSuccess = true) {
 
   if (toastIcon) {
     if (isSuccess) {
-      toastIcon.className = "fas fa-check-circle text-emerald-400 dark:text-emerald-600 text-lg";
+      toastIcon.className = "fas fa-check-circle text-emerald-400 dark:text-emerald-600 text-base";
     } else {
-      toastIcon.className = "fas fa-exclamation-circle text-rose-400 dark:text-rose-600 text-lg";
+      toastIcon.className = "fas fa-exclamation-circle text-rose-400 dark:text-rose-600 text-base";
     }
   }
 
   toast.classList.remove("hidden");
-  // Trigger animation
   requestAnimationFrame(() => {
     toast.classList.remove("opacity-0", "translate-y-4");
     toast.classList.add("opacity-100", "translate-y-0");
@@ -38,21 +37,21 @@ function initTheme() {
   const html = document.documentElement;
   const themeIcons = [
     document.getElementById("theme-icon"),
-    document.getElementById("theme-icon-mobile")
+    document.getElementById("theme-icon-mobile"),
   ];
 
   function updateIcons(isDark) {
     themeIcons.forEach((icon) => {
       if (!icon) return;
       if (isDark) {
-        icon.className = "fas fa-sun text-amber-400 text-base";
+        icon.className = "fas fa-sun text-amber-400 text-sm md:text-base";
       } else {
-        icon.className = "fas fa-moon text-slate-600 text-base";
+        icon.className = "fas fa-moon text-slate-600 text-sm md:text-base";
       }
     });
   }
 
-  // Set initial theme - default to Light theme unless explicitly saved as 'dark'
+  // Set initial theme
   if (savedTheme === "dark") {
     html.classList.add("dark");
     updateIcons(true);
@@ -65,7 +64,10 @@ function initTheme() {
     const isDark = html.classList.toggle("dark");
     localStorage.setItem("theme", isDark ? "dark" : "light");
     updateIcons(isDark);
-    showToast(isDark ? "🌙 Switched to Dark Theme" : "☀️ Switched to Fresh Light Theme", true);
+    showToast(
+      isDark ? "🌙 Switched to Dark Theme" : "☀️ Switched to Fresh Light Theme",
+      true
+    );
   }
 
   const themeToggleBtn = document.getElementById("theme-toggle");
@@ -116,9 +118,11 @@ function initContactForm() {
         }
       }
     } catch (error) {
-      showToast("⚠️ Network issue. Please email avinashpednekar431@gmail.com directly.", false);
+      showToast(
+        "⚠️ Network issue. Please email avinashpednekar431@gmail.com directly.",
+        false
+      );
     } finally {
-      // Reset Button State
       submitBtn.disabled = false;
       if (btnText) btnText.textContent = "Send Message";
       if (btnLoader) btnLoader.classList.add("hidden");
@@ -133,29 +137,40 @@ function initCopyEmail() {
 
   copyBtn.addEventListener("click", () => {
     const email = "avinashpednekar431@gmail.com";
-    navigator.clipboard
-      .writeText(email)
-      .then(() => {
-        showToast("📋 Email copied to clipboard: " + email, true);
-      })
-      .catch(() => {
-        showToast("📋 Contact: " + email, true);
-      });
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard
+        .writeText(email)
+        .then(() => {
+          showToast("📋 Email copied to clipboard: " + email, true);
+        })
+        .catch(() => {
+          showToast("📋 Contact: " + email, true);
+        });
+    } else {
+      showToast("📋 Email: " + email, true);
+    }
   });
 }
 
-// 5. Mobile Navigation & Scroll Reveal
+// 5. Mobile Navigation & Scroll Logic
 function initNavAndScroll() {
-  // Mobile Hamburger Toggle
   const menuBtn = document.getElementById("menu-btn");
   const mobileMenu = document.getElementById("mobile-menu");
 
   if (menuBtn && mobileMenu) {
-    menuBtn.addEventListener("click", () => {
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
       mobileMenu.classList.toggle("hidden");
     });
 
-    // Close menu when a link is clicked
+    // Close menu when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+        mobileMenu.classList.add("hidden");
+      }
+    });
+
+    // Close menu when clicking any nav link
     const links = mobileMenu.querySelectorAll("a");
     links.forEach((link) => {
       link.addEventListener("click", () => {
@@ -166,31 +181,39 @@ function initNavAndScroll() {
 
   // Header elevation on scroll
   const header = document.getElementById("header");
-  window.addEventListener("scroll", () => {
-    if (window.scrollY > 40) {
-      header.classList.add("shadow-md");
-    } else {
-      header.classList.remove("shadow-md");
-    }
-  });
-
-  // Intersection Observer for Smooth Scroll Reveal
-  const observerOptions = {
-    threshold: 0.12,
-    rootMargin: "0px 0px -40px 0px",
-  };
-
-  const revealObserver = new IntersectionObserver((entries, observer) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("revealed");
-        observer.unobserve(entry.target);
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (window.scrollY > 30) {
+        header.classList.add("shadow-md");
+      } else {
+        header.classList.remove("shadow-md");
       }
-    });
-  }, observerOptions);
+    },
+    { passive: true }
+  );
 
-  const revealElements = document.querySelectorAll(".reveal-item");
-  revealElements.forEach((el) => revealObserver.observe(el));
+  // Progressive Scroll Reveal
+  if ("IntersectionObserver" in window) {
+    document.body.classList.add("js-anim");
+
+    const observerOptions = {
+      threshold: 0.08,
+      rootMargin: "0px 0px -20px 0px",
+    };
+
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("revealed");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    const revealElements = document.querySelectorAll(".reveal-item");
+    revealElements.forEach((el) => revealObserver.observe(el));
+  }
 }
 
 // 6. Typed.js Hero Animation
@@ -204,9 +227,9 @@ function initTypedText() {
         "Scalable RESTful Systems.",
         "AI-Integrated Solutions.",
       ],
-      typeSpeed: 60,
-      backSpeed: 35,
-      backDelay: 1800,
+      typeSpeed: 50,
+      backSpeed: 30,
+      backDelay: 1600,
       loop: true,
       smartBackspace: true,
       cursorChar: "|",
@@ -251,13 +274,15 @@ function initProjectModals() {
     if (!targetModal) return;
 
     targetModal.classList.add("active");
+    document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
   }
 
   function closeModal(modal) {
     if (!modal) return;
     modal.classList.remove("active");
-    document.body.style.overflow = "auto";
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
   }
 
   detailBtns.forEach((btn) => {
@@ -282,7 +307,7 @@ function initProjectModals() {
     });
   });
 
-  // ESC key listener to close active modal
+  // ESC key listener
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       const activeModal = document.querySelector(".project-modal.active");
@@ -301,7 +326,7 @@ function initYear() {
   }
 }
 
-// Initialize everything on DOMContentLoaded
+// Initialize on DOM ready
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   initContactForm();
