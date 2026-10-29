@@ -1,5 +1,22 @@
 // script.js - Avinash Pednekar Portfolio Script
 
+// 0. Dynamic Portfolio Configuration Initializer
+function initPortfolioConfig() {
+  const config =
+    typeof PORTFOLIO_CONFIG !== "undefined"
+      ? PORTFOLIO_CONFIG
+      : typeof window !== "undefined"
+      ? window.PORTFOLIO_CONFIG
+      : null;
+
+  if (config && config.resumeUrl) {
+    const resumeLinks = document.querySelectorAll("[data-resume-link]");
+    resumeLinks.forEach((link) => {
+      link.href = config.resumeUrl;
+    });
+  }
+}
+
 // 1. Toast Notification Helper
 function showToast(message, isSuccess = true) {
   const toast = document.getElementById("toast");
@@ -328,6 +345,7 @@ function initYear() {
 
 // Initialize on DOM ready
 document.addEventListener("DOMContentLoaded", () => {
+  initPortfolioConfig();
   initTheme();
   initContactForm();
   initCopyEmail();
