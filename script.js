@@ -12,9 +12,9 @@ function showToast(message, isSuccess = true) {
 
   if (toastIcon) {
     if (isSuccess) {
-      toastIcon.className = "fas fa-check-circle text-emerald-400 dark:text-emerald-600 text-base";
+      toastIcon.className = "fas fa-check-circle text-emerald-400 text-base";
     } else {
-      toastIcon.className = "fas fa-exclamation-circle text-rose-400 dark:text-rose-600 text-base";
+      toastIcon.className = "fas fa-exclamation-circle text-rose-400 text-base";
     }
   }
 
